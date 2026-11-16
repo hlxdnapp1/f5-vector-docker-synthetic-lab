@@ -145,8 +145,9 @@ export function projectLabResponse(plan, upstream, id) {
           data[position+3]!==0 || len<1 || len>512 || position+8+len>data.length) return deny('LOG_FRAME_DENIED');
       let line;
       try {line=utf8.decode(data.subarray(position+8,position+8+len));}catch{return deny('LOG_FRAME_DENIED');}
-      const m=/^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z) R6F_PUBLIC_SYNTHETIC_ONLY\n$/.exec(line);
-      if (!m || !Number.isFinite(Date.parse(m[1]))) return deny('LOG_CONTENT_DENIED');
+      const m=/^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?Z) R6F_PUBLIC_SYNTHETIC_ONLY\n$/.exec(line);
+      const parsed = m ? Date.parse(m[1]) : NaN;
+      if (!Number.isFinite(parsed) || new Date(parsed).toISOString().slice(0,19) !== m[1].slice(0,19)) return deny('LOG_CONTENT_DENIED');
       const body=Buffer.from(m[1]+' '+MARKER+'\n');const header=Buffer.alloc(8);
       header[0]=channel;header.writeUInt32BE(body.length,4);outputs.push(Buffer.concat([header,body]));
       position+=8+len;
