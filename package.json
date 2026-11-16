@@ -1,0 +1,13 @@
+{
+  "name": "vector-docker-synthetic-lab",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Public standalone synthetic contract tests; no Docker or CI execution",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

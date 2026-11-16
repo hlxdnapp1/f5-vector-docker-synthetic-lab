@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "purpose": "public-synthetic-vector-docker-contract-only",
+  "allowed_container": {
+    "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "name": "synthetic-allowed"
+  },
+  "excluded_container": {
+    "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "name": "synthetic-excluded"
+  },
+  "log_marker": "SYNTHETIC_VECTOR_R6B_ONLY",
+  "max_log_tail": 100,
+  "allowed_methods": [
+    "GET"
+  ],
+  "operations": [
+    "ping",
+    "version",
+    "list",
+    "inspect",
+    "events",
+    "logs"
+  ]
+}
