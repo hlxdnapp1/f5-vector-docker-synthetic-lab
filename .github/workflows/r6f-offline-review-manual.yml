@@ -1,0 +1,48 @@
+name: R6F Public Synthetic Review (manual only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r6f-public-offline-review
+  cancel-in-progress: false
+
+jobs:
+  offline-review-only:
+    if: github.repository == 'hlxdnapp1/f5-vector-docker-synthetic-lab' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Fail-closed hosted runner scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REPOSITORY" = "hlxdnapp1/f5-vector-docker-synthetic-lab"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$RUNNER_ENVIRONMENT" = "github-hosted"
+          test "$RUNNER_OS" = "Linux"
+          test -z "${DOCKER_HOST:-}"
+          test -z "${DOCKER_CONTEXT:-}"
+          test -z "${DOCKER_TLS_VERIFY:-}"
+          test -z "${DOCKER_CERT_PATH:-}"
+
+      - name: Checkout public repository only, without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Verify no extra workflows and run offline Node tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find .github/workflows -type f | wc -l)" -eq 1
+          test -f .github/workflows/r6f-offline-review-manual.yml
+          node -e "if (Number(process.versions.node.split('.')[0]) < 20) process.exit(1)"
+          node --test --test-reporter=tap tests/*.test.mjs
+          echo "PASS_OFFLINE_ONLY=1"
+          echo "DOCKER_REAL=NOT_USED"
+          echo "HML_PRODUCTION=NO_GO"

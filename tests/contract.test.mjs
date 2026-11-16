@@ -46,10 +46,12 @@ test('PUBLIC-R6B-07: repository is not a published package and has no dependenci
     assert.equal(Object.hasOwn(pkg, field), false);
   }
 });
-test('PUBLIC-R6B-08: no Actions workflow, credential, container or executable runner file', () => {
+test('PUBLIC-R6B-08: only approved Draft manual workflow, no credentials or container recipes', () => {
   const top = readdirSync(root).sort();
-  assert.deepEqual(top, ['.git','.gitignore','README.md','SECURITY.md','docs','fixtures','package.json','tests']);
-  assert.equal(existsSync(join(root,'.github','workflows')),false);
+  assert.deepEqual(top, ['.git','.github','.gitignore','README.md','SECURITY.md','docs','fixtures','package.json','src','tests']);
+  const workflows = join(root,'.github','workflows');
+  assert.equal(existsSync(workflows),true);
+  assert.deepEqual(readdirSync(workflows).sort(),['r6f-offline-review-manual.yml']);
   assert.equal(existsSync(join(root,'Dockerfile')),false);
   assert.equal(existsSync(join(root,'.env')),false);
   assert.equal(existsSync(join(root,'node_modules')),false);
