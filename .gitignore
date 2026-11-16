@@ -1,0 +1,11 @@
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+*.log
+node_modules/
+out/
+tmp/
