@@ -144,7 +144,7 @@ test('R6D-15 oversized and invalid payload types are always rejected',()=>{
 test('R6D-16 filter has no network, subprocess, filesystem or environment APIs',()=>{
   const src=readFileSync(new URL('./synthetic-response-boundary.mjs',import.meta.url),'utf8');
   assert.match(src,/import \{ classifySyntheticDockerRead \} from '\.\/synthetic-read-policy\.mjs'/);
-  assert.doesNotMatch(src,/\b(?:process\.env|spawn|exec|fetch|createServer|createConnection|http\.request|https\.request|net\.connect|Dockerode)\b/);
+  assert.doesNotMatch(src,/\b(?:process\.env|spawn|fetch|createServer|createConnection|http\.request|https\.request|net\.connect|Dockerode|child_process)\b|\b(?:execFileSync|execSync)\s*\(/);
   assert.doesNotMatch(src,/\b(?:require|eval|Function)\s*\(/);
   assert.doesNotMatch(src,/\b(?:readFileSync|writeFileSync|openSync)\s*\(/);
 });
