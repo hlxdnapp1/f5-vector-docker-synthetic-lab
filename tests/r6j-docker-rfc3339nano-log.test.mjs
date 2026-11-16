@@ -96,9 +96,10 @@ test('R6J-10: mux channel, reserved header and truncated framing remain guarded'
   const reserved=Buffer.from(good);reserved[3]=1;
   const channel=Buffer.from(good);channel[0]=3;
   const broken=Buffer.from(good);broken.writeUInt32BE(9000,4);
-  for(const b of [reserved,channel,broken,good.subarray(0,5),Buffer.alloc(0)]) {
+  for(const b of [reserved,channel,broken,good.subarray(0,5)]) {
     assert.equal(project(b).ok,false);
   }
+  assert.equal(project(Buffer.alloc(0)).ok,true); // Empty log snapshot is valid.
 });
 test('R6J-11: one bad frame invalidates the complete response atomically',()=>{
   const body=Buffer.concat([
