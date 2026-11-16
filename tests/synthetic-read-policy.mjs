@@ -44,7 +44,7 @@ export function classifySyntheticDockerRead(input) {
   if (rawPath.startsWith('/v1.') && (!version || Number(version[1]) < 40 ||
       Number(version[1]) > 59)) return deny('API_VERSION_DENIED');
   const route = version ? version[2] : rawPath;
-  if (route.startsWith('/v') && !version) return deny('API_VERSION_DENIED');
+  if (/^\/v(?:\d|\.)/.test(route) && !version) return deny('API_VERSION_DENIED');
   let params;
   try { params = new URLSearchParams(rawQuery); } catch { return deny('QUERY_DENIED'); }
   const keys = [...params.keys()];
