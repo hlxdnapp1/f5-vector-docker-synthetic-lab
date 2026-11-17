@@ -32,7 +32,9 @@ test('R7A-03: explicitly reviewed SHA and inert-by-default dispatch input', () =
   assert.match(workflow, /R7A_REVIEWED_COMMIT: \$\{\{ inputs\.reviewed_commit \}\}/);
   assert.match(workflow, /test "\$R7A_REVIEWED_COMMIT" = "\$GITHUB_SHA"/);
   assert.match(shell, /COMMIT_NOT_MATCHING_REVIEWED/);
-  assert.match(shell, /GITHUB_REPOSITORY_VISIBILITY:-\}" == "public"/);
+  assert.match(workflow, /R7A_REPOSITORY_VISIBILITY: \$\{\{ github\.event\.repository\.visibility \}\}/);
+  assert.match(workflow, /test "\$R7A_REPOSITORY_VISIBILITY" = "public"/);
+  assert.match(shell, /R7A_REPOSITORY_VISIBILITY:-\}" == "public"/);
 });
 
 test('R7A-04: permissions read-only; checkout pinned, no token persistence', () => {
