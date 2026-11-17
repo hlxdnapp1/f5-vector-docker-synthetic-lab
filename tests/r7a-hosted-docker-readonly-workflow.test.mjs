@@ -70,3 +70,10 @@ test('R7A-07: clean-main release has exactly one manual workflow and no R6F depe
   assert.match(workflow, /test -f \.github\/workflows\/r7a-hosted-real-docker-readonly\.yml/);
   assert.doesNotMatch(workflow, /r6f-offline-review-manual\.yml/);
 });
+
+test('R7A-08: job references protected environment, never grants implicit approval', () => {
+  assert.match(workflow, /^    environment: EXATA-LAB-R7A$/m);
+  assert.match(workflow, /default: DENY/);
+  assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
+  assert.doesNotMatch(workflow, /secrets\.|environment:\s*production|environment:\s*EXATA-HML/);
+});
