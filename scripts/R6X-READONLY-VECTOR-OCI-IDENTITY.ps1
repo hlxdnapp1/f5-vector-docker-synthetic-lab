@@ -14,7 +14,7 @@ function Invoke-DockerRead {
 function Read-StringList {
     param([string]$Raw,[string]$Step)
     if ($Raw.Length -gt 16384) { throw ('R6X_BLOCKED_' + $Step + '_SIZE') }
-    if ($Raw -eq 'null') { return ,@() }
+    if ($Raw -eq 'null') { return @() }
     try {
         $parsed = ConvertFrom-Json -InputObject $Raw -ErrorAction Stop
     } catch { throw ('R6X_BLOCKED_' + $Step + '_JSON') }
@@ -25,7 +25,7 @@ function Read-StringList {
             throw ('R6X_BLOCKED_' + $Step + '_ITEM')
         }
     }
-    return ,$items
+    return $items
 }
 
 $expectedReportHash='3B6ECD3BDB08F3F1F798D7D5148DE4A9EB8CF8421BE63A3AF5F3DAFBA13838D9'
