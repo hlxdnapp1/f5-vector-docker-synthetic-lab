@@ -1,0 +1,91 @@
+# R7A — REVIEW ONLY until a separate approved merge into default branch.
+# Manual preflight only: REAL Docker Engine READ-ONLY, never Vector/fixtures/mTLS.
+# Do not dispatch without a second, explicit approval for this exact commit.
+name: "R7A Hosted Real Docker — Read-only preflight (manual only)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Explicit second gate: select only after approval to inspect runner Docker"
+        type: choice
+        required: true
+        default: DENY
+        options:
+          - DENY
+          - HOST_READONLY_ONLY
+      reviewed_commit:
+        description: "Exact 40-character approved main commit SHA (must equal running commit)"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r7a-real-docker-readonly-single-flight
+  cancel-in-progress: false
+
+jobs:
+  hosted-docker-readonly:
+    if: >-
+      ${{ github.repository == 'hlxdnapp1/f5-vector-docker-synthetic-lab' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/main' &&
+          github.event.repository.private == false &&
+          inputs.scope == 'HOST_READONLY_ONLY' }}
+    runs-on: ubuntu-24.04
+    environment: EXATA-LAB-R7A
+    timeout-minutes: 8
+    env:
+      R7A_SCOPE: ${{ inputs.scope }}
+      R7A_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      R7A_REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
+    steps:
+      - name: Reject wrong runner and Docker context before checkout
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REPOSITORY" = "hlxdnapp1/f5-vector-docker-synthetic-lab"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$R7A_REPOSITORY_VISIBILITY" = "public"
+          test "$RUNNER_ENVIRONMENT" = "github-hosted"
+          test "$RUNNER_OS" = "Linux"
+          test "$RUNNER_ARCH" = "X64"
+          test "$R7A_SCOPE" = "HOST_READONLY_ONLY"
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$R7A_REVIEWED_COMMIT" = "$GITHUB_SHA"
+          test -z "${DOCKER_HOST:-}"
+          test -z "${DOCKER_CONTEXT:-}"
+          test -z "${DOCKER_CONFIG:-}"
+          test -z "${DOCKER_CERT_PATH:-}"
+          test -z "${DOCKER_TLS_VERIFY:-}"
+          test -z "${DOCKER_API_VERSION:-}"
+
+      - name: Checkout only public LAB (pinned action, read-only token)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Verify manifest and isolated Docker preflight implementation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(find .github/workflows -type f | wc -l)" -eq 1
+          test -f .github/workflows/r7a-hosted-real-docker-readonly.yml
+          test -f scripts/R7A-HOSTED-DOCKER-READONLY-PREFLIGHT.sh
+          test -f tests/r7a-hosted-docker-readonly-workflow.test.mjs
+          bash -n scripts/R7A-HOSTED-DOCKER-READONLY-PREFLIGHT.sh
+          node --test --test-reporter=tap tests/r7a-hosted-docker-readonly-workflow.test.mjs
+
+      - name: Real local Docker Engine READ-ONLY G0 (no containers)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash scripts/R7A-HOSTED-DOCKER-READONLY-PREFLIGHT.sh
+
+# G1/G2 — NOT PRESENT / NOT APPROVED:
+# No Docker image pulls, synthetic fixtures, Vector process, mTLS broker,
+# Docker stream follow=true, external networks, artifacts or HML access.
+# All such steps require a separately reviewed PR and explicit approval.
