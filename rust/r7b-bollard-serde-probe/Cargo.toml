@@ -1,0 +1,13 @@
+# R7B-G1B8 - offline Rust/Serde probe. No Docker client or socket.
+# Versions are the exact resolved top-level versions from Vector v0.53.0 Cargo.lock.
+# Cargo.lock for this standalone research crate is NOT generated or homologated yet.
+[package]
+name = "r7b-bollard-serde-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bollard-stubs = { version = "=1.49.0-rc.28.3.3", default-features = false, features = ["chrono"] }
+chrono = { version = "=0.4.41", default-features = false, features = ["std", "serde"] }
+serde_json = { version = "=1.0.145", default-features = false, features = ["std"] }
