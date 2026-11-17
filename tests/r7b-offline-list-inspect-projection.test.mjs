@@ -13,11 +13,11 @@ const LABELS={'r7b.lab.owner':'LAB_ONLY','r7b.lab.role':'fixture'};
 const CREATED=1794860000;
 const iso=new Date(CREATED*1000).toISOString();
 const record=()=>({Id:ID,Names:[NAME],Image:IMAGE,ImageID:IMAGE_ID,
-  Labels:{...LABELSy,State:'running',Status:'Up 1 second',Created:CREATED});
+  Labels:{...LABELS},State:'running',Status:'Up 1 second',Created:CREATED});
 const details=()=>({Id:ID,Name:NAME,Created:iso,
-  State:{Status:'running',Running:truey,Config:{Image:IMAGE,Labels:{...LABELSy,Tty:falsey,
-  HostConfig:{NetworkMode:'none',Privileged:false,ReadonlyRootfs:truey,
-  Mounts:[],NetworkSettings:{Networks:{yyy);
+  State:{Status:'running',Running:true},Config:{Image:IMAGE,Labels:{...LABELS},Tty:false},
+  HostConfig:{NetworkMode:'none',Privileged:false,ReadonlyRootfs:true},
+  Mounts:[],NetworkSettings:{Networks:{}}});
 const buf=o=>Buffer.from(JSON.stringify(o));
 const reject=(fn,pattern)=>assert.throws(fn,pattern);
 
@@ -26,7 +26,7 @@ test('R7B3-01: LIST projects one exact fixture',()=>{
   assert.deepEqual(JSON.parse(list(buf([record()])).toString()),[record()]);
 });
 test('R7B3-02: LIST foreign IDs and metadata never appear in output',()=>{
-  const stranger={Id:FOREIGN,Names:['/PRIVATE_NAME'],Secret:'CANARY_TOKEN',Labels:{'private':'CANARY'yy;
+  const stranger={Id:FOREIGN,Names:['/PRIVATE_NAME'],Secret:'CANARY_TOKEN',Labels:{'private':'CANARY'}};
   const result=list(buf([stranger,record()]));
   assert.deepEqual(JSON.parse(result.toString()),[record()]);
   assert.doesNotMatch(result.toString(),/PRIVATE_NAME|CANARY_TOKEN|private/);
@@ -37,7 +37,7 @@ test('R7B3-03: LIST empty and foreign-only arrays project empty safely',()=>{
 });
 test('R7B3-04: LIST rejects duplicate authorized ID',()=>reject(()=>list(buf([record(),record()])),/LIST_DUPLICATE/));
 test('R7B3-05: LIST rejects malformed foreign entries rather than guessing scope',()=>{
-  for(const item of [null,{y, {Id:'not-a-docker-id'y,7,[],{Id:'a'.repeat(63)}])
+  for(const item of [null,{}, {Id:'not-a-docker-id'},7,[],{Id:'a'.repeat(63)}])
     reject(()=>list(buf([item])),/LIST_ITEM/);
 });
 test('R7B3-06: LIST refuses wrong labels, status and image',()=>{
@@ -55,7 +55,7 @@ test('R7B3-08: LIST requires exact synthetic Names',()=>{
   reject(()=>list(buf([{...record(),Names:[NAME,'/other']}])) ,/LIST_TARGET/);
 });
 test('R7B3-09: LIST rejects oversized item count',()=>{
-  reject(()=>list(buf(Array.from({length:13y,(_,i)=>({Id:i.toString(16).padStart(64,'0')})))),/LIST_SCOPE/);
+  reject(()=>list(buf(Array.from({length:13},(_,i)=>({Id:i.toString(16).padStart(64,'0')})))),/LIST_SCOPE/);
 });
 test('R7B3-10: LIST rejects non-buffer, zero and huge input',()=>{
   for(const v of [null,'[]',Buffer.alloc(0),Buffer.alloc(16385,32)])
@@ -87,24 +87,24 @@ test('R7B3-17: INSPECT denies body with foreign container ID',()=>{
   reject(()=>inspect(buf({...details(),Id:FOREIGN}),ID),/INSPECT_TARGET/);
 });
 test('R7B3-18: INSPECT rejects extra secrets/LogPath and private env',()=>{
-  for(const field of [{LogPath:'/home/secret/log'y, {Path:'/bin/secret'y, {Private:'CANARY'y])
+  for(const field of [{LogPath:'/home/secret/log'}, {Path:'/bin/secret'}, {Private:'CANARY'}])
     reject(()=>inspect(buf({...details(),...field}),ID),/INSPECT_TARGET/);
   reject(()=>inspect(buf({...details(),Config:{...details().Config,Env:['SECRET=CANARY']}}),ID),/INSPECT_TARGET/);
 });
 test('R7B3-19: INSPECT requires rootfs read-only and no privileges',()=>{
-  for(const bad of [{Privileged:truey,{ReadonlyRootfs:falsey,{NetworkMode:'host'}]){
+  for(const bad of [{Privileged:true},{ReadonlyRootfs:false},{NetworkMode:'host'}]){
     reject(()=>inspect(buf({...details(),HostConfig:{...details().HostConfig,...bad}}),ID),/INSPECT_TARGET/);
   }
 });
 test('R7B3-20: INSPECT rejects mounts and attached networks',()=>{
   reject(()=>inspect(buf({...details(),Mounts:[{Source:'/mnt/private'}]}),ID),/INSPECT_TARGET/);
-  reject(()=>inspect(buf({...details(),NetworkSettings:{Networks:{bridge:{yyyy),ID),/INSPECT_TARGET/);
+  reject(()=>inspect(buf({...details(),NetworkSettings:{Networks:{bridge:{}}}}),ID),/INSPECT_TARGET/);
 });
 test('R7B3-21: INSPECT state, TTY, label and image mismatch fail closed',()=>{
-  const bad=[{State:{Status:'exited',Running:falseyy,
-    {Config:{...details().Config,Tty:true}y,
-    {Config:{...details().Config,Labels:{...LABELS,secret:'x'}yy,
-    {Config:{...details().Config,Image:'latest'}y];
+  const bad=[{State:{Status:'exited',Running:false}},
+    {Config:{...details().Config,Tty:true}},
+    {Config:{...details().Config,Labels:{...LABELS,secret:'x'}}},
+    {Config:{...details().Config,Image:'latest'}}];
   for(const mutation of bad)reject(()=>inspect(buf({...details(),...mutation}),ID),/INSPECT_TARGET/);
 });
 test('R7B3-22: INSPECT timestamp and identity drift are rejected',()=>{
@@ -121,7 +121,7 @@ test('R7B3-24: INSPECT rejects malformed UTF-8 and non-JSON',()=>{
 });
 test('R7B3-25: INSPECT nested arrays/extra network keys are rejected',()=>{
   reject(()=>inspect(buf({...details(),NetworkSettings:{Networks:[]}}),ID),/INSPECT_TARGET/);
-  reject(()=>inspect(buf({...details(),State:{...details().State,ExitCode:1yy),ID),/INSPECT_TARGET/);
+  reject(()=>inspect(buf({...details(),State:{...details().State,ExitCode:1}}),ID),/INSPECT_TARGET/);
 });
 
 // LIST and INSPECT must agree before either Buffer can be returned.
