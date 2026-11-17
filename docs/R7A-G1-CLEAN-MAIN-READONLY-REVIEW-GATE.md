@@ -24,14 +24,14 @@ O workflow `.github/workflows/r7a-hosted-real-docker-readonly.yml` possui:
 
 - Ainda **NÃO** foi aprovado adicionar arquivo de workflow à `main`; não foi acionado `workflow_dispatch`. A API do laboratório informou zero runs até a última verificação. O `main` não recebeu código deste PR.
 - O R7A-G1 NÃO implementa Vector 0.53.0 real, gateway mTLS, listener HTTPS, Docker `follow=true`, filtros de evento/log de múltiplos projetos, sandbox de containers, cleanup ou rollback. Não confundir R6R offline 271/271 PASS com esse trabalho.
-- Testes do **candidato limpo** precisam ser avaliados por sua sintaxe/estática, blob hash e diff independentes; resultados do PR #26 são apenas evidência da referência de origem, não podem ser automaticamente copiados para a candidata.
+- A suíte estática independente do **candidato limpo** foi executada localmente no head final: 8/8 PASS; `bash -n` do script também PASS. Resultados do PR #26 continuam sendo apenas evidência da referência de origem, não copiada para a candidata.
 - Imagem Vector R6X: tag local `0.53.0-alpine` Linux/amd64, índice público coincidente; ID da config local `sha256:ca92d617e905953c3f852e7e88061f7039460e733522e3f0c21bc6ae946b2558`. Isto não prova o binário ou conectividade real.
 
 ## 3A. Evidência de proteção da main e vínculo de execução
 
-O proprietário confirmou a **criação** do ruleset `EXATA-LAB-PROTECT-MAIN` para a branch padrão `main`, após compartilhar capturas das opções ativas `Restrict deletions`, `Block force pushes`, `Require a pull request before merging`, `Required approvals = 0`, `Bypass list` vazia e `Enforcement = Active`. **Não há nova captura pós-criação atestando o status efetivo nem leitura da configuração via API**, portanto a proteção é `OWNER_CONFIRMED / NOT_INDEPENDENTLY_VERIFIED`. Os controles PR não equivalem a autorização de execução do Actions.
+A leitura independente da API confirmou o ruleset `EXATA-LAB-PROTECT-MAIN` para a branch padrão: `enforcement=active`, condição `~DEFAULT_BRANCH`, bloqueios de deleção e non-fast-forward, pull request obrigatório, lista de bypass vazia e `current_user_can_bypass=never`. Os controles PR não equivalem, sozinhos, a autorização de execução do Actions.
 
-Nesta revisão Draft, adicionamos `environment: EXATA-LAB-R7A` ao job G0 e uma oitava asserção estática do vínculo. **ATENÇÃO:** referenciar esse nome no YAML, sem configurar um GitHub Environment com `Required reviewers`, não impõe aprovação: o GitHub pode criar automaticamente um Environment ainda não protegido. Por isso nenhum merge, dispatch ou alegação de autorização até que o proprietário mostre o Environment configurado de fato.
+Nesta revisão Draft, `environment: EXATA-LAB-R7A` está vinculado ao job G0 e a oitava asserção estática verifica esse vínculo. A tela oficial do Environment salvo confirmou: `Required reviewers` com `hlxdnapp1`, `Prevent self-review` desativado, bypass administrativo desativado, somente `main` em deployment branches/tags e nenhum secret/variable. Portanto o gate de configuração do Environment está verificado; isso ainda não autoriza merge nem dispatch.
 
 Configuração-alvo para `Settings → Environments → New environment`:
 
@@ -50,7 +50,7 @@ Fontes oficiais: [GitHub — managing environments](https://docs.github.com/en/a
 
 Antes de qualquer G0B/G0C, revisar as permissões reais de escrita/Actions do repositório e configurar uma proteção verificável de execução, como **GitHub Actions Environment com revisores obrigatórios e proteção de branch**, confirmando previamente que ela existe e está efetivamente configurada; declarar `environment:` no YAML sem configurar a proteção **não** é evidência suficiente. Requer alteração e aprovação de governança próprias. Enquanto isso, não publicar ou despachar o workflow. Conferir também a visibilidade pública e a classe padrão do runner na data do acionamento.
 
-**Resultado da verificação por conector nesta etapa:** a consulta GitHub da proteção da `main` retornou HTTP 403 (`Resource not accessible by integration`); as consultas de configuração de Actions e Environments não foram permitidas pela interface disponível. **Permissões de execução, revisores obrigatórios e proteção da branch permanecem UNVERIFIED/BLOCKED.** Não interpretar 403 como ausência de proteção e não habilitar nada por tentativa.
+**Resultado final da verificação:** a API do GitHub confirmou o Ruleset ativo e restrito à `main`; a interface oficial confirmou o Environment `EXATA-LAB-R7A` com o revisor `hlxdnapp1`, self-review desativado, bypass administrativo desativado, deployment restrito à `main` e sem secrets/variables. A API do Environment não foi usada porque o conector não expõe esse endpoint; a confirmação foi feita na tela salva. Isso verifica a configuração, mas não concede autorização de merge ou execução.
 
 ## 4. Próximos gates separados (NÃO liberados por esta entrega)
 
