@@ -153,7 +153,7 @@ function safeList(created) {
     HostConfig:{NetworkMode:'none'},NetworkSettings:{Networks:{}}}];
 }
 function safeInspect(created) {
-  return {Id:ID,Name:NAME,Image:IMAGE_ID,Created:new Date(created*1000).toISOString(),
+  return {Id:ID,Name:NAME,Image:IMAGE_ID,Created:created,
     State:{Status:'running',Running:true},Config:{Image:IMAGE,Labels:{...LABELS},Tty:false},
     HostConfig:{NetworkMode:'none',Privileged:false,ReadonlyRootfs:true},
     Mounts:[],NetworkSettings:{Networks:{}}};
@@ -164,16 +164,18 @@ export function normalizeR7BOfflineDockerList(body) {
 }
 /** Accept extra real-shaped fields, never forward Env/LogPath/Command etc. */
 export function normalizeR7BOfflineDockerInspect(body,requestedId) {
-  const created = inspectTarget(json(body),requestedId);
-  return Buffer.from(JSON.stringify(safeInspect(created)));
+  const inspected = json(body);
+  inspectTarget(inspected,requestedId);
+  return Buffer.from(JSON.stringify(safeInspect(inspected.Created)));
 }
 /** Cross-check LIST and INSPECT (including creation seconds) before exposing outputs. */
 export function normalizeR7BOfflineDockerPair(listBody,inspectBody,requestedId) {
   if (requestedId !== ID) block('REQUESTED_ID');
   const listCreated = extractList(listBody);
   if (listCreated === null) block('LIST_MISSING');
-  const inspectCreated = inspectTarget(json(inspectBody),requestedId);
+  const inspected = json(inspectBody);
+  const inspectCreated = inspectTarget(inspected,requestedId);
   if (listCreated !== inspectCreated) block('CREATED_DRIFT');
   return Object.freeze({list:Buffer.from(JSON.stringify(safeList(listCreated))),
-    inspect:Buffer.from(JSON.stringify(safeInspect(inspectCreated)))});
+    inspect:Buffer.from(JSON.stringify(safeInspect(inspected.Created)))});
 }
