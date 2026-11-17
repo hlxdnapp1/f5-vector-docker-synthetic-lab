@@ -40,6 +40,7 @@ jobs:
     env:
       R7A_SCOPE: ${{ inputs.scope }}
       R7A_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      R7A_REPOSITORY_VISIBILITY: ${{ github.event.repository.visibility }}
     steps:
       - name: Reject wrong runner and Docker context before checkout
         shell: bash
@@ -48,7 +49,7 @@ jobs:
           test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
           test "$GITHUB_REPOSITORY" = "hlxdnapp1/f5-vector-docker-synthetic-lab"
           test "$GITHUB_REF" = "refs/heads/main"
-          test "$GITHUB_REPOSITORY_VISIBILITY" = "public"
+          test "$R7A_REPOSITORY_VISIBILITY" = "public"
           test "$RUNNER_ENVIRONMENT" = "github-hosted"
           test "$RUNNER_OS" = "Linux"
           test "$RUNNER_ARCH" = "X64"
