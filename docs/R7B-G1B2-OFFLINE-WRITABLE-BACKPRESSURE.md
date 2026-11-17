@@ -36,7 +36,7 @@ Resultado **20/20 PASS, 0 FAIL, 0 skipped, 0 cancelled**.
 
 Relatório TAP local SHA-256: `0a2c594e9c502c17a8b6f5fcca5ff23d7ac7f21fcb0ce12b26d2400546d5b337`. Os bytes do relatório TAP **não foram enviados ao GitHub**, mas os resultados dos testes foram presenciados na execução local. Varredura de referências Docker remoto/privadas no código do pump: **PASS**.
 
-**Os 26 testes históricos do parser R7B-G1B não foram reexecutados nesta etapa**; a interface do módulo foi validada por 20 novos testes integrados ao parser exato já aprovado.
+**Validação conjunta posterior à publicação Draft:** o arquivo histórico `tests/r7b-bounded-synthetic-stream.test.mjs` foi reobtido do GitHub e validado por Git blob `eef38b2e4a0f2bf7a54396fc78cd5c3e63f07418`, e as duas suítes foram executadas juntas com Node v22.16.0: **46/46 PASS**, 0 falhas, 0 pulados, 0 cancelados. Comando: `node --test --test-reporter=tap tests/r7b-bounded-synthetic-stream.test.mjs tests/r7b-offline-backpressure-pump.test.mjs`. SHA-256 do relatório TAP conjunto local: `3e3994ec412907eb1a2b0a276557a1227bcbfbf285c830efef061f04a614348e`. Nenhum teste Docker/Vector real foi iniciado.
 
 ## 3. Fronteiras de evidência — NÃO é um gateway real
 
