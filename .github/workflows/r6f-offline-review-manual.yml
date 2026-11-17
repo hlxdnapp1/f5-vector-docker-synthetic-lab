@@ -39,8 +39,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find .github/workflows -type f | wc -l)" -eq 1
+          test "$(find .github/workflows -type f | wc -l)" -eq 2
           test -f .github/workflows/r6f-offline-review-manual.yml
+          test -f .github/workflows/r7a-hosted-real-docker-readonly.yml
           node -e "if (Number(process.versions.node.split('.')[0]) < 20) process.exit(1)"
           node --test --test-reporter=tap tests/*.test.mjs
           echo "PASS_OFFLINE_ONLY=1"
