@@ -26,7 +26,7 @@ A **única** atividade futura que o workflow R7A conseguiria fazer, **depois** d
 
 | Gate | Condição | Situação |
 | --- | --- | --- |
-| R7A-G0A | CI **estático local**, YAML/bash/testes completos, SHA GitHub | PENDENTE de execução/verificação no PR |
+| R7A-G0A | CI **estático local**, YAML/bash/testes completos, Git blobs SHA | **PASS LOCAL**: Node 7/7, Bash parse, YAML 2/2, falha segura 4/4; GitHub Actions não executado |
 | R7A-G0B | Autorizar **merge limitado** do workflow e scripts ao `main` público | **BLOQUEADO: aprovação separada** |
 | R7A-G0C | Autorizar **primeiro `workflow_dispatch` manual** com SHA exato, custo/visibilidade conferidos | **BLOQUEADO: aprovação separada** |
 | R7A-G0D | G0 somente leitura Docker Engine Unix local no runner | **NOT_RUN** |
@@ -44,5 +44,7 @@ A **única** atividade futura que o workflow R7A conseguiria fazer, **depois** d
 - R6R 271/271 Node Windows **PASS offline**, sem Docker real; R6S–R6U PASS read-only; R6W 8/8 protegidos healthy em observação; R6X tag/digest público `0.53.0-alpine` `linux/amd64` e config image ID `sha256:ca92d617e905953c3f852e7e88061f7039460e733522e3f0c21bc6ae946b2558`. A versão executável nunca foi atestada, e os dois Vector locais continuam contidos.
 - Código Supabase CLI `v2.117.0`, commit `21db855916f2c2b12f61cde923a27094b8528b23`, gera `DOCKER_HOST=http://host.docker.internal:2375` no Windows npipe; esta conexão continua insegura e não deve ser habilitada no servidor.
 - **R7A não reproduz R6R** nem tenta atualizar Supabase, Docker Desktop, Windows Server, Hyper-V, banco, fiscal, HML ou produção.
+
+**Evidência da revisão local (sem runner):** cópias exatas dos 4 arquivos executáveis/controle foram confrontadas com os Git blobs: script `265e6ff23f6c6d2476f0e741c17268ac991770b1`, YAML novo `d834078955ef1f025a042abec95de96a4311cca3`, teste `c51e5126e483a6424cb4cb007846c2bfb264540c`, workflow offline anterior minimamente ajustado `6fd1b3e63e18a56305a56d2ca41febf535c41874`. Resultado local Node `7/7 PASS` (`ExitCode=0`); `bash -n` `PASS`; ambos os YAML analisados (`2/2`); quatro testes negativos (`EVENT_NOT_MANUAL`, `WRONG_REPO`, `COMMIT_NOT_MATCHING_REVIEWED`, `DOCKER_ENV_OVERRIDE_PRESENT`) encerraram com código 1 conforme esperado. Estes testes **não são** GitHub Actions ou prova do Docker Engine real. A suíte histórica completa R6R `271/271` não foi repetida.
 
 **Conclusão:** R7A = **PR Draft com candidato de preflight Docker real somente leitura**, sem teste real ainda, sem execução/merge. Preparação técnica incremental concluída somente após checagem de integridade e testes estáticos; recuperação do Vector continua **BLOCKED**.
