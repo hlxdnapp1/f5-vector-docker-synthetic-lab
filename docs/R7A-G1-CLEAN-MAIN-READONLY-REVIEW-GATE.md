@@ -27,6 +27,23 @@ O workflow `.github/workflows/r7a-hosted-real-docker-readonly.yml` possui:
 - Testes do **candidato limpo** precisam ser avaliados por sua sintaxe/estática, blob hash e diff independentes; resultados do PR #26 são apenas evidência da referência de origem, não podem ser automaticamente copiados para a candidata.
 - Imagem Vector R6X: tag local `0.53.0-alpine` Linux/amd64, índice público coincidente; ID da config local `sha256:ca92d617e905953c3f852e7e88061f7039460e733522e3f0c21bc6ae946b2558`. Isto não prova o binário ou conectividade real.
 
+## 3A. Evidência de proteção da main e vínculo de execução
+
+O proprietário confirmou a **criação** do ruleset `EXATA-LAB-PROTECT-MAIN` para a branch padrão `main`, após compartilhar capturas das opções ativas `Restrict deletions`, `Block force pushes`, `Require a pull request before merging`, `Required approvals = 0`, `Bypass list` vazia e `Enforcement = Active`. **Não há nova captura pós-criação atestando o status efetivo nem leitura da configuração via API**, portanto a proteção é `OWNER_CONFIRMED / NOT_INDEPENDENTLY_VERIFIED`. Os controles PR não equivalem a autorização de execução do Actions.
+
+Nesta revisão Draft, adicionamos `environment: EXATA-LAB-R7A` ao job G0 e uma oitava asserção estática do vínculo. **ATENÇÃO:** referenciar esse nome no YAML, sem configurar um GitHub Environment com `Required reviewers`, não impõe aprovação: o GitHub pode criar automaticamente um Environment ainda não protegido. Por isso nenhum merge, dispatch ou alegação de autorização até que o proprietário mostre o Environment configurado de fato.
+
+Configuração-alvo para `Settings → Environments → New environment`:
+
+1. Nome exato: `EXATA-LAB-R7A` (somente laboratório público).
+2. `Required reviewers`: adicionar explicitamente a conta do proprietário ou outro revisor autorizado com acesso ao repositório. Não cadastrar um grupo automático com acesso amplo.
+3. `Prevent self-review`: **desativado somente se o único revisor for a mesma pessoa que iniciará o workflow**; marcar essa opção numa equipe de uma pessoa impediria a própria aprovação. Isso representa dois atos explícitos de controle pelo proprietário, **não** revisão independente.
+4. `Deployment branches/tags`: `Selected branches and tags` → incluir `main` exata; não `all branches`.
+5. **Não criar secrets/variáveis, tokens, URLs privadas ou exceções para administrators**; se existir a opção de ignorar/bypassar a proteção de Environment, ela deve permanecer desligada quando possível.
+6. Conferir evidências por captura do Environment salvo (revisores obrigatórios, proteção por branch); sem essas evidências, `G0B/G0C=BLOCKED`.
+
+Fontes oficiais: [GitHub — managing environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments) e [GitHub — reviewing deployments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments). `Required reviewers` está disponível para repositórios públicos nos planos atuais aplicáveis. O workflow continua `Draft` e inexecutável em `main`, portanto **nenhum Actions/Daemon Docker real foi acionado**.
+
 ## 4. Controle de autorização de operadores antes do merge
 
 **Atenção:** `scope=DENY` por padrão e `reviewed_commit` são barreiras de erro operacional, **não são autenticação nem autorização criptográfica**. O SHA de commit é público e qualquer pessoa com permissão de escrita no repositório pode selecionar `HOST_READONLY_ONLY` e copiar o SHA. Nunca afirmar que a mera entrada do workflow comprova aprovação explícita do proprietário.
