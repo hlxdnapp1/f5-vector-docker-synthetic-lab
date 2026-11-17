@@ -23,7 +23,7 @@ is_hex40() {
 is_hex40 "${GITHUB_SHA:-}" || fail "INVALID_GITHUB_SHA"
 is_hex40 "${R7A_REVIEWED_COMMIT:-}" || fail "INVALID_REVIEWED_COMMIT"
 [[ "$GITHUB_SHA" == "$R7A_REVIEWED_COMMIT" ]] || fail "COMMIT_NOT_MATCHING_REVIEWED"
-[[ "${GITHUB_REPOSITORY_VISIBILITY:-}" == "public" ]] || fail "REPOSITORY_NOT_PUBLIC"
+[[ "${R7A_REPOSITORY_VISIBILITY:-}" == "public" ]] || fail "REPOSITORY_NOT_PUBLIC"
 
 # Reject any hint of a Docker remote endpoint or client context override.
 for setting in DOCKER_HOST DOCKER_CONTEXT DOCKER_CONFIG DOCKER_TLS_VERIFY \
