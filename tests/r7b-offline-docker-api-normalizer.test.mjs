@@ -137,9 +137,9 @@ test('R7B4-18 pair rejects timestamp drift even when both bodies individually va
   const o=detail();o.Created=new Date((CREATED+1)*1000).toISOString();
   err(()=>pair(body([entry()]),body(o),ID),'CREATED_DRIFT');
 });
-test('R7B4-19 inspect accepts RFC3339Nano 9-digit fraction',()=>{
+test('R7B4-19 inspect preserves RFC3339Nano 9-digit fraction',()=>{
   const o=detail();o.Created=stamp.replace('.000Z','.123456789Z');
-  assert.equal(JSON.parse(inspect(body(o),ID)).Created,stamp);
+  assert.equal(JSON.parse(inspect(body(o),ID)).Created,o.Created);
 });
 test('R7B4-20 invalid JSON bodies rejected',()=>{
   err(()=>list(Buffer.from('[broken')),'JSON_SYNTAX');
