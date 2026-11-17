@@ -33,6 +33,8 @@ O workflow `.github/workflows/r7a-hosted-real-docker-readonly.yml` possui:
 
 Antes de qualquer G0B/G0C, revisar as permissões reais de escrita/Actions do repositório e configurar uma proteção verificável de execução, como **GitHub Actions Environment com revisores obrigatórios e proteção de branch**, confirmando previamente que ela existe e está efetivamente configurada; declarar `environment:` no YAML sem configurar a proteção **não** é evidência suficiente. Requer alteração e aprovação de governança próprias. Enquanto isso, não publicar ou despachar o workflow. Conferir também a visibilidade pública e a classe padrão do runner na data do acionamento.
 
+**Resultado da verificação por conector nesta etapa:** a consulta GitHub da proteção da `main` retornou HTTP 403 (`Resource not accessible by integration`); as consultas de configuração de Actions e Environments não foram permitidas pela interface disponível. **Permissões de execução, revisores obrigatórios e proteção da branch permanecem UNVERIFIED/BLOCKED.** Não interpretar 403 como ausência de proteção e não habilitar nada por tentativa.
+
 ## 4. Próximos gates separados (NÃO liberados por esta entrega)
 
 1. **G0A, revisão estática:** revisão de dados publicados em PR Draft diretamente para `main`, limites do workflow, testes de sintaxe, hashes e branch. Se divergirem: FAIL/BLOCKED.
