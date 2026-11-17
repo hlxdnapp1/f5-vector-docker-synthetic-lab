@@ -28,9 +28,8 @@ async function collectFinite(response, signal, limitBytes) {
   try {
     for await (const part of response.bytes()) {
       if (signal?.aborted) fail('CANCELLED');
-      if (!Buffer.isBuffer(part) || part.length < 1 || part.length > 2048 ||
-          ++total > Number.MAX_SAFE_INTEGER) fail('CHUNK');
-      total += part.length - 1;
+      if (!Buffer.isBuffer(part) || part.length < 1 || part.length > 2048) fail('CHUNK');
+      total += part.length;
       if (chunks.length >= MAX_CHUNKS || total > limitBytes) fail('LIMIT');
       chunks.push(Buffer.from(part));
     }
