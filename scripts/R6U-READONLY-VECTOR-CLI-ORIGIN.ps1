@@ -134,10 +134,11 @@ if ($cliMatches.Count -gt 1) {
         if ($candidate.Length -gt 128 -or $advisory.Length -gt 4096) {
             throw 'R6U_BLOCKED_CLI_VERSION_OUTPUT_SIZE'
         }
-        if ($candidate -notmatch '^(?:supabase\s+)?v?(\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?)$') {
+        if ($candidate -match '^(?:supabase\s+)?v?(\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?)$') {
+            $cliVersion = $Matches[1]
+        } else {
             throw 'R6U_BLOCKED_CLI_VERSION_FORMAT'
         }
-        $cliVersion = $Matches[1]
         if ($advisory.Length -gt 0) {
             $safeLines = @($advisory -split "\r?\n" |
                 Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
