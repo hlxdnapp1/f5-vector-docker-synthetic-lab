@@ -35,6 +35,7 @@ jobs:
           github.event.repository.private == false &&
           inputs.scope == 'HOST_READONLY_ONLY' }}
     runs-on: ubuntu-24.04
+    environment: EXATA-LAB-R7A
     timeout-minutes: 8
     env:
       R7A_SCOPE: ${{ inputs.scope }}
