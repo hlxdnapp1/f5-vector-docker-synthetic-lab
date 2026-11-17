@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 function Invoke-ReadDocker {
-    param([string[]]$Args, [string]$Step)
-    $captured = & $script:dockerExe @Args 2>&1
+    param([string[]]$DockerArguments, [string]$Step)
+    $captured = & $script:dockerExe @DockerArguments 2>&1
     if ($LASTEXITCODE -ne 0) { throw "R6S_BLOCKED_DOCKER_$Step" }
     return ($captured | Out-String)
 }
@@ -47,18 +47,18 @@ if (-not [string]::IsNullOrWhiteSpace($envDockerHost) -and
     $envDockerHost -notmatch '^npipe:////\./pipe/(docker_engine|dockerDesktopLinuxEngine)$') {
     throw 'R6S_BLOCKED_DOCKER_HOST_NOT_LOCAL_NPIPE'
 }
-$contextName = (Invoke-ReadDocker -Args @('context','show') -Step 'CONTEXT_SHOW').Trim()
+$contextName = (Invoke-ReadDocker -DockerArguments @('context','show') -Step 'CONTEXT_SHOW').Trim()
 if ($contextName -notmatch '^[a-zA-Z0-9_.-]{1,100}$') { throw 'R6S_BLOCKED_CONTEXT_NAME' }
-$endpoint = (Invoke-ReadDocker -Args @('context','inspect',$contextName,'--format','{{.Endpoints.docker.Host}}') -Step 'CONTEXT_INSPECT').Trim()
+$endpoint = (Invoke-ReadDocker -DockerArguments @('context','inspect',$contextName,'--format','{{.Endpoints.docker.Host}}') -Step 'CONTEXT_INSPECT').Trim()
 if ($endpoint -notmatch '^npipe:////\./pipe/(docker_engine|dockerDesktopLinuxEngine)$') {
     throw 'R6S_BLOCKED_CONTEXT_NOT_LOCAL_NPIPE'
 }
-$dockerVersion = (Invoke-ReadDocker -Args @('version','--format','{{.Server.Version}}') -Step 'VERSION').Trim()
+$dockerVersion = (Invoke-ReadDocker -DockerArguments @('version','--format','{{.Server.Version}}') -Step 'VERSION').Trim()
 if ($dockerVersion -notmatch '^\d+\.\d+\.[0-9]+') { throw 'R6S_BLOCKED_ENGINE_VERSION' }
-$engineOS = (Invoke-ReadDocker -Args @('info','--format','{{.OSType}}') -Step 'ENGINE_OS').Trim()
+$engineOS = (Invoke-ReadDocker -DockerArguments @('info','--format','{{.OSType}}') -Step 'ENGINE_OS').Trim()
 if ($engineOS -ne 'linux') { throw 'R6S_BLOCKED_ENGINE_NOT_LINUX' }
 
-$rawList = Invoke-ReadDocker -Args @('ps','--all','--format','{{json .}}') -Step 'CONTAINER_LIST'
+$rawList = Invoke-ReadDocker -DockerArguments @('ps','--all','--format','{{json .}}') -Step 'CONTAINER_LIST'
 $entries = New-Object 'System.Collections.Generic.List[object]'
 foreach ($line in ($rawList -split "\r?\n")) {
     if ([string]::IsNullOrWhiteSpace($line)) { continue }
@@ -77,7 +77,7 @@ foreach ($name in $targets) {
         $vectors.Add([pscustomobject]@{name=$name;present=$false;state='MISSING';docker_host='UNKNOWN';unix_socket_mount=$false;tls_verify_present=$false;tls_cert_path_present=$false;compose_label=$false;compose_config_files_label=$false;mount_count=0;network='UNKNOWN';restart_count=$null})
         continue
     }
-    $raw = Invoke-ReadDocker -Args @('container','inspect',$name) -Step 'VECTOR_INSPECT'
+    $raw = Invoke-ReadDocker -DockerArguments @('container','inspect',$name) -Step 'VECTOR_INSPECT'
     if ($raw.Length -gt 512000) { throw 'R6S_BLOCKED_INSPECT_SIZE' }
     try { $parsed = ConvertFrom-Json -InputObject $raw -ErrorAction Stop }
     catch { throw 'R6S_BLOCKED_INSPECT_JSON' }
