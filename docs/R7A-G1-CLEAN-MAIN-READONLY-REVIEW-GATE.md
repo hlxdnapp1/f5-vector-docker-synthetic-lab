@@ -5,7 +5,7 @@ Data: 16/11/2026. Governança: [EXATA #315](https://github.com/hlxdnapp1/Sistema
 ## 1. Razão para separar esta candidata do PR #26
 
 - [PR Draft #26](https://github.com/hlxdnapp1/f5-vector-docker-synthetic-lab/pull/26), `review/r7a-hosted-docker-real-preflight-draft-20261116`, commit `a76ca00c26354f119c50a289fa2816a22d2ae937`, tem base R6Z `9d9d69a626c3b920f663d2522992f22f0c68765f`. Sua ancestralidade inclui etapas anteriores de revisão offline. **Não direcionar ou mesclar o PR #26 diretamente na `main`**, pois isto incorporaria histórico não homologado para publicação.
-- Este PR R7A-G1 nasceu **diretamente da `main` exata `72775463905e9f81730f8f8bb5e5c054f136e6ff`**, sem herdar a cadeia R6F–R6Z. Diferença intencional: apenas workflow R7A de pré-verificação **somente leitura**, script Bash correspondente, sete testes Node estáticos, esta documentação e menor ajuste da linha descritiva README.
+- Este PR R7A-G1 nasceu **diretamente da `main` exata `72775463905e9f81730f8f8bb5e5c054f136e6ff`**, sem herdar a cadeia R6F–R6Z. Diferença intencional: apenas workflow R7A de pré-verificação **somente leitura**, script Bash correspondente, oito testes Node estáticos, esta documentação e menor ajuste da linha descritiva README.
 - Nenhum arquivo R6F, R6G, fixtures ou código de política offline é necessário para o G0 read-only. O workflow usa `find .github/workflows -type f | wc -l == 1` e recusa dependência de `r6f-offline-review-manual.yml`.
 
 ## 2. Autorização e alcance
