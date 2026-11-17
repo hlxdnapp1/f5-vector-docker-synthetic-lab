@@ -27,6 +27,12 @@ O workflow `.github/workflows/r7a-hosted-real-docker-readonly.yml` possui:
 - Testes do **candidato limpo** precisam ser avaliados por sua sintaxe/estática, blob hash e diff independentes; resultados do PR #26 são apenas evidência da referência de origem, não podem ser automaticamente copiados para a candidata.
 - Imagem Vector R6X: tag local `0.53.0-alpine` Linux/amd64, índice público coincidente; ID da config local `sha256:ca92d617e905953c3f852e7e88061f7039460e733522e3f0c21bc6ae946b2558`. Isto não prova o binário ou conectividade real.
 
+## 4. Controle de autorização de operadores antes do merge
+
+**Atenção:** `scope=DENY` por padrão e `reviewed_commit` são barreiras de erro operacional, **não são autenticação nem autorização criptográfica**. O SHA de commit é público e qualquer pessoa com permissão de escrita no repositório pode selecionar `HOST_READONLY_ONLY` e copiar o SHA. Nunca afirmar que a mera entrada do workflow comprova aprovação explícita do proprietário.
+
+Antes de qualquer G0B/G0C, revisar as permissões reais de escrita/Actions do repositório e configurar uma proteção verificável de execução, como **GitHub Actions Environment com revisores obrigatórios e proteção de branch**, confirmando previamente que ela existe e está efetivamente configurada; declarar `environment:` no YAML sem configurar a proteção **não** é evidência suficiente. Requer alteração e aprovação de governança próprias. Enquanto isso, não publicar ou despachar o workflow. Conferir também a visibilidade pública e a classe padrão do runner na data do acionamento.
+
 ## 4. Próximos gates separados (NÃO liberados por esta entrega)
 
 1. **G0A, revisão estática:** revisão de dados publicados em PR Draft diretamente para `main`, limites do workflow, testes de sintaxe, hashes e branch. Se divergirem: FAIL/BLOCKED.
