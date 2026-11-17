@@ -33,14 +33,14 @@ A leitura independente da API confirmou o ruleset `EXATA-LAB-PROTECT-MAIN` para 
 
 Nesta revisão Draft, `environment: EXATA-LAB-R7A` está vinculado ao job G0 e a oitava asserção estática verifica esse vínculo. A tela oficial do Environment salvo confirmou: `Required reviewers` com `hlxdnapp1`, `Prevent self-review` desativado, bypass administrativo desativado, somente `main` em deployment branches/tags e nenhum secret/variable. Portanto o gate de configuração do Environment está verificado; isso ainda não autoriza merge nem dispatch.
 
-Configuração-alvo para `Settings → Environments → New environment`:
+Configuração efetiva verificada em `Settings → Environments`:
 
-1. Nome exato: `EXATA-LAB-R7A` (somente laboratório público).
-2. `Required reviewers`: adicionar explicitamente a conta do proprietário ou outro revisor autorizado com acesso ao repositório. Não cadastrar um grupo automático com acesso amplo.
-3. `Prevent self-review`: **desativado somente se o único revisor for a mesma pessoa que iniciará o workflow**; marcar essa opção numa equipe de uma pessoa impediria a própria aprovação. Isso representa dois atos explícitos de controle pelo proprietário, **não** revisão independente.
-4. `Deployment branches/tags`: `Selected branches and tags` → incluir `main` exata; não `all branches`.
-5. **Não criar secrets/variáveis, tokens, URLs privadas ou exceções para administrators**; se existir a opção de ignorar/bypassar a proteção de Environment, ela deve permanecer desligada quando possível.
-6. Conferir evidências por captura do Environment salvo (revisores obrigatórios, proteção por branch); sem essas evidências, `G0B/G0C=BLOCKED`.
+1. **PASS — Nome exato:** `EXATA-LAB-R7A` (somente laboratório público).
+2. **PASS — Required reviewers:** conta `hlxdnapp1` adicionada explicitamente; não há grupo automático.
+3. **PASS — Prevent self-review:** desativado, pois o único revisor é a mesma pessoa que iniciará o workflow; isso não é revisão independente.
+4. **PASS — Deployment branches/tags:** `Selected branches and tags` com `main` exata; não `all branches`.
+5. **PASS — Segredos e exceções:** nenhum secret/variable configurado e bypass administrativo desligado.
+6. **PASS — Evidência:** tela do Environment salvo confirma todos os itens acima. G0B/G0C continuam bloqueados apenas por autorização separada de publicação/execução.
 
 Fontes oficiais: [GitHub — managing environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments) e [GitHub — reviewing deployments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments). `Required reviewers` está disponível para repositórios públicos nos planos atuais aplicáveis. O workflow continua `Draft` e inexecutável em `main`, portanto **nenhum Actions/Daemon Docker real foi acionado**.
 
