@@ -104,12 +104,53 @@ $cliMatches = @(Get-Command -Name 'supabase.exe' -CommandType Application -All -
 if ($cliMatches.Count -gt 1) {
     $cliVersion='MULTIPLE_INSTALLATIONS_NOT_QUERIED'
 } elseif ($cliMatches.Count -eq 1) {
-    $candidate = (& ([string]$cliMatches[0]) --version 2>&1 | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0) { throw 'R6U_BLOCKED_CLI_VERSION_EXIT' }
-    if ($candidate -notmatch '(?m)^(?:supabase\s+)?v?(\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?)$') {
-        throw 'R6U_BLOCKED_CLI_VERSION_FORMAT'
+    # PowerShell 5.1 can promote a harmless CLI update notice on stderr to
+    # NativeCommandError when ErrorActionPreference is Stop. Capture both
+    # streams independently; require exit code 0 and a valid stdout version.
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = [string]$cliMatches[0]
+    $psi.Arguments = '--version'
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+    $psi.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+    $proc = New-Object System.Diagnostics.Process
+    $proc.StartInfo = $psi
+    try {
+        if (-not $proc.Start()) { throw 'R6U_BLOCKED_CLI_VERSION_START' }
+        $outTask = $proc.StandardOutput.ReadToEndAsync()
+        $errTask = $proc.StandardError.ReadToEndAsync()
+        if (-not $proc.WaitForExit(15000)) {
+            try { $proc.Kill(); $proc.WaitForExit() }
+            catch { throw 'R6U_BLOCKED_CLI_VERSION_TIMEOUT_UNCONFIRMED_STOP' }
+            throw 'R6U_BLOCKED_CLI_VERSION_TIMEOUT'
+        }
+        $proc.WaitForExit()
+        $candidate = $outTask.GetAwaiter().GetResult().Trim()
+        $advisory = $errTask.GetAwaiter().GetResult().Trim()
+        if ($proc.ExitCode -ne 0) { throw 'R6U_BLOCKED_CLI_VERSION_EXIT' }
+        if ($candidate.Length -gt 128 -or $advisory.Length -gt 4096) {
+            throw 'R6U_BLOCKED_CLI_VERSION_OUTPUT_SIZE'
+        }
+        if ($candidate -notmatch '^(?:supabase\s+)?v?(\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?)$') {
+            throw 'R6U_BLOCKED_CLI_VERSION_FORMAT'
+        }
+        $cliVersion = $Matches[1]
+        if ($advisory.Length -gt 0) {
+            $safeLines = @($advisory -split "\r?\n" |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+            foreach ($line in $safeLines) {
+                if ($line -notmatch '^A new version of Supabase CLI is available: v\d+\.\d+\.\d+ \(currently installed v\d+\.\d+\.\d+\)$' -and
+                    $line -notmatch '^We recommend updating regularly for new features and bug fixes: https://supabase\.com/\S+$') {
+                    throw 'R6U_BLOCKED_CLI_VERSION_UNEXPECTED_STDERR'
+                }
+            }
+        }
+    } finally {
+        $proc.Dispose()
     }
-    $cliVersion=$Matches[1]
 }
 $equal = $projectValues[0].Length -gt 0 -and $projectValues[0] -ceq $projectValues[1]
 $report = [ordered]@{
