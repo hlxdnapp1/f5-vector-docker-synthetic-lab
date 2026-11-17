@@ -1,0 +1,139 @@
+# EXATA R7B-G1B10: manual Rust/Serde lab only; no Docker or EXATA access.
+name: "R7B Rust Serde manual isolated"
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        type: choice
+        required: true
+        default: DENY
+        options: [DENY, RUN_SERDE_IN_MEMORY]
+      reviewed_main_sha:
+        description: "Approved 40-digit main commit"
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: r7b-rust-serde-single
+  cancel-in-progress: false
+jobs:
+  rust-serde:
+    if: ${{ github.repository == 'hlxdnapp1/f5-vector-docker-synthetic-lab' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.repository.private == false && inputs.scope == 'RUN_SERDE_IN_MEMORY' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      APPROVED_SHA: ${{ inputs.reviewed_main_sha }}
+      GATE: ${{ inputs.scope }}
+      PUBLIC_VISIBILITY: ${{ github.event.repository.visibility }}
+      LAB_SHA: b2af15c6dcf6273d350aa06dd0fb1d366825fa51
+    steps:
+      - name: Fail-closed preflight before checkout
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$GITHUB_REF" = refs/heads/main
+          test "$GITHUB_REPOSITORY" = hlxdnapp1/f5-vector-docker-synthetic-lab
+          test "$PUBLIC_VISIBILITY" = public
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          test "$RUNNER_OS" = Linux
+          test "$RUNNER_ARCH" = X64
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          test "$GATE" = RUN_SERDE_IN_MEMORY
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$APPROVED_SHA" = "$GITHUB_SHA"
+          test -z "${DOCKER_HOST:-}"
+          test -z "${DOCKER_CONTEXT:-}"
+          test -z "${DOCKER_CERT_PATH:-}"
+          test -z "${DOCKER_TLS_VERIFY:-}"
+      - name: Checkout pinned public LAB sources only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: b2af15c6dcf6273d350aa06dd0fb1d366825fa51
+          path: lab
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify Git blobs and stage safe scratch crate
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd lab
+          test "$(git rev-parse HEAD)" = "$LAB_SHA"
+          base=rust/r7b-bollard-serde-probe
+          test "$(git hash-object "$base/Cargo.toml")" = 5750340dcef6fd45e547dc5ef4977d7c1d429542
+          test "$(git hash-object "$base/tests/serde_models.rs")" = 64ebb92d57eb572b0463845e139aea77b5790a79
+          test ! -e "$base/Cargo.lock"
+          test ! -e "$base/build.rs"
+          work="$RUNNER_TEMP/r7b-rust-serde"
+          test ! -e "$work"
+          install -d -m 0700 "$work/tests"
+          cp "$base/Cargo.toml" "$work/Cargo.toml"
+          cp "$base/tests/serde_models.rs" "$work/tests/serde_models.rs"
+          test "$(git hash-object "$work/Cargo.toml")" = 5750340dcef6fd45e547dc5ef4977d7c1d429542
+          test "$(git hash-object "$work/tests/serde_models.rs")" = 64ebb92d57eb572b0463845e139aea77b5790a79
+          echo "R7B_WORK=$work" >> "$GITHUB_ENV"
+      - name: Install official pinned Rust 1.90.0
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          command -v rustup
+          rustup toolchain install 1.90.0 --profile minimal --no-self-update
+          echo "RUSTUP_TOOLCHAIN=1.90.0" >> "$GITHUB_ENV"
+          rustup run 1.90.0 rustc --version
+          rustup run 1.90.0 cargo --version
+      - name: Generate and audit Cargo.lock before executing tests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd "$R7B_WORK"
+          cargo generate-lockfile
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,re,tomllib
+          folder=pathlib.Path(os.environ['R7B_WORK'])
+          raw=(folder/'Cargo.lock').read_bytes()
+          lock=tomllib.loads(raw.decode())
+          pkgs=lock['package']
+          assert lock.get('version') in (3,4)
+          assert 3 <= len(pkgs) <= 250
+          versions={'bollard-stubs':'1.49.0-rc.28.3.3','chrono':'0.4.41','serde_json':'1.0.145'}
+          present={(p['name'],p['version']) for p in pkgs}
+          for name,version in versions.items():
+              assert (name,version) in present,f'Unexpected {name} version'
+          for p in pkgs:
+              if p['name']=='r7b-bollard-serde-probe':
+                  assert p['version']=='0.0.0' and 'source' not in p
+              else:
+                  assert p.get('source')=='registry+https://github.com/rust-lang/crates.io-index'
+                  assert re.fullmatch('[0-9a-f]{64}',p.get('checksum',''))
+          sha=hashlib.sha256(raw).hexdigest()
+          report={'result':'PASS_LOCK_AUDIT','sha256':sha,'packages':len(pkgs),'source':'b2af15c6dcf6273d350aa06dd0fb1d366825fa51'}
+          (folder/'lock-audit.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as s: s.write('Cargo.lock SHA256: '+sha+'\n')
+          PY
+          cargo fetch --locked
+      - name: Compile and run exactly twelve Rust Serde tests OFFLINE
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd "$R7B_WORK"
+          export CARGO_NET_OFFLINE=true
+          export CARGO_TARGET_DIR="$RUNNER_TEMP/r7b-rust-target"
+          cargo test --locked --offline --all-targets -- --test-threads=1 2>&1 | tee rust-test.log
+          python3 - <<'PY'
+          import os,pathlib,re
+          text=(pathlib.Path(os.environ['R7B_WORK'])/'rust-test.log').read_text()
+          results=re.findall(r'test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored;',text)
+          assert any(a=='12' and b=='0' and c=='0' for a,b,c in results), '12 Rust tests NOT confirmed'
+          assert 'test result: FAILED' not in text
+          print('PASS: real 12/12 Rust/Serde tests')
+          PY
+      - name: Retain only public lock and test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: r7b-rust-serde-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/r7b-rust-serde/
+          retention-days: 7
+          if-no-files-found: ignore
